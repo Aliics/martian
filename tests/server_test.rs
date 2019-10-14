@@ -1,6 +1,6 @@
 extern crate martian;
 
-use martian::server::HttpServer;
+use martian::server::{HttpServer, Router};
 
 #[test]
 fn should_create_port_with_expected_defaults() {
@@ -12,4 +12,9 @@ fn should_create_port_with_expected_defaults() {
 fn should_define_port_via_secondary_static_method() {
     let hs = HttpServer::of_port(7812);
     assert_eq!(7812, hs.port);
+}
+
+#[test]
+fn should_create_router_with_expected_defaults() {
+    Router::new();
 }
