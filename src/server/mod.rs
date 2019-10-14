@@ -14,15 +14,21 @@ impl HttpServer {
     pub fn of_port(port: i16) -> HttpServer {
         HttpServer {
             port: port,
-            router: Router::new(), 
+            router: Router::new(),
         }
     }
 }
 
-pub struct Router {  }
+pub struct Router {
+    pub handlers: Vec<Handler>,
+}
 
 impl Router {
     pub fn new() -> Router {
-        Router {  }
+        Router {
+            handlers: vec![Handler {}],
+        }
     }
 }
+
+pub struct Handler {}

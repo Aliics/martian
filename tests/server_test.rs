@@ -16,5 +16,6 @@ fn should_define_port_via_secondary_static_method() {
 
 #[test]
 fn should_create_router_with_expected_defaults() {
-    Router::new();
+    let r = Router::new();
+    assert_eq!(1, r.handlers.len())
 }
