@@ -25,10 +25,37 @@ pub struct Router {
 
 impl Router {
     pub fn new() -> Router {
-        Router {
-            handlers: vec![Handler {}],
+        Router { handlers: vec![] }
+    }
+
+    pub fn delegate(self, uri: &str, rq: Request) -> Response {
+        let mut i_handlers = self.handlers.into_iter();
+        let handler = i_handlers.find(|h| h.uri == uri);
+        match handler {
+            Some(h) => (h.callback)(rq),
+            None => panic!(),
         }
     }
 }
 
-pub struct Handler {}
+pub struct Handler {
+    pub uri: &'static str,
+    pub callback: fn(rq: Request) -> Response,
+}
+
+impl Handler {
+    pub fn new(uri: &'static str, callback: fn(rq: Request) -> Response) -> Handler {
+        Handler {
+            uri: uri,
+            callback: callback,
+        }
+    }
+}
+
+pub struct Request {
+    pub data: &'static str,
+}
+
+pub struct Response {
+    pub data: &'static str,
+}
