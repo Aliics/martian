@@ -51,5 +51,7 @@ fn echo_cb(rq: Request) -> Response {
 }
 
 fn hello_cb(_: Request) -> Response {
-    Response { data: "Hello, World!" }
+    Response {
+        data: "Hello, World!",
+    }
 }
