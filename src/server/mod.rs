@@ -1,3 +1,5 @@
+pub type HandlerCallback = fn(rq: Request) -> Response;
+
 pub struct HttpServer {
     pub port: i16,
     pub router: Router,
@@ -40,11 +42,11 @@ impl Router {
 
 pub struct Handler {
     pub uri: &'static str,
-    pub callback: fn(rq: Request) -> Response,
+    pub callback: HandlerCallback,
 }
 
 impl Handler {
-    pub fn new(uri: &'static str, callback: fn(rq: Request) -> Response) -> Handler {
+    pub fn new(uri: &'static str, callback: HandlerCallback) -> Handler {
         Handler {
             uri: uri,
             callback: callback,
