@@ -1,3 +1,5 @@
+pub mod prelude;
+
 pub type HandlerCallback = fn(rq: Request) -> Response;
 
 pub struct HttpServer {

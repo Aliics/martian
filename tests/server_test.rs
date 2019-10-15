@@ -1,6 +1,6 @@
 extern crate martian;
 
-use martian::server::{Handler, HttpServer, Request, Response, Router};
+use martian::server::prelude::*;
 
 #[test]
 fn should_create_port_with_expected_defaults() {
