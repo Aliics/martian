@@ -1,3 +1,7 @@
+use std::net::TcpListener;
+use std::io::Write;
+use std::clone::Clone;
+
 pub mod prelude;
 
 pub type HandlerCallback = fn(rq: Request) -> Response;
@@ -17,12 +21,30 @@ impl HttpServer {
 
     pub fn of_port(port: i16) -> HttpServer {
         HttpServer {
-            port: port,
+            port,
             router: Router::new(),
+        }
+    }
+
+    pub fn start(self) {
+        match TcpListener::bind(format!("0.0.0.0:{}", self.port)) {
+            Ok(s) => self.listen(s),
+            Err(_) => panic!(format!("Could not start server at {}", self.port))
+        }
+    }
+
+    fn listen(self, s: TcpListener) {
+        for rr in s.incoming() {
+            if rr.is_err() { panic!("Error occurred accepting incoming request") }
+            let mut r = rr.unwrap();
+            let rp = self.router.clone().delegate("/pong", Request { data: "ping" });
+            r.write(rp.data.as_bytes()).unwrap();
+            r.flush().unwrap();
         }
     }
 }
 
+#[derive(Clone)]
 pub struct Router {
     pub handlers: Vec<Handler>,
 }
@@ -42,6 +64,7 @@ impl Router {
     }
 }
 
+#[derive(Clone)]
 pub struct Handler {
     pub uri: &'static str,
     pub callback: HandlerCallback,
@@ -50,8 +73,8 @@ pub struct Handler {
 impl Handler {
     pub fn new(uri: &'static str, callback: HandlerCallback) -> Handler {
         Handler {
-            uri: uri,
-            callback: callback,
+            uri,
+            callback,
         }
     }
 }
