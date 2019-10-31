@@ -6,7 +6,7 @@ use martian::server::prelude::*;
 /// The purpose of this is to allow a manual run of the server
 /// and for me to have a crack at using my api from the perspective
 /// of another dev.
-#[test]
+//#[test]
 fn start_up_server() {
     let mut hs = HttpServer::new();
     hs.router.handlers.push(Handler { uri: "/pong", callback: handle_request });
