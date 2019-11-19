@@ -93,16 +93,7 @@ impl HttpRequest {
 /// raw request. An Http Request will have the version on the end of the status
 /// line, and it will be prepended with *"HTTP/"*. This method will strip that
 /// unnecessary data off and return an _f32_ representing the version.
-///
-/// # Examples
-/// ```
-/// use martian::web::get_http_version;
-/// let given_full_version = "HTTP/1.1";
-/// let expected_version = 1.1;
-/// let actual_version = get_http_version(given_full_version).unwrap();
-/// assert_eq!(actual_version, expected_version);
-/// ```
-pub fn get_http_version(full_version_string: &str) -> Result<f32, &str> {
+fn get_http_version(full_version_string: &str) -> Result<f32, &str> {
     let version_split = full_version_string.split("/").collect::<Vec<&str>>();
     Ok(version_split[1]
         .parse::<f32>()
