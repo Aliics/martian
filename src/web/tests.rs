@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use crate::web::get_http_version;
     use crate::web::{HttpMethod, HttpRequest};
     use std::collections::HashMap;
 
@@ -40,5 +41,27 @@ mod tests {
     fn should_have_an_error_result_when_method_does_not_exist() {
         let given_bad = "do";
         HttpMethod::from(given_bad).unwrap();
+    }
+
+    #[test]
+    fn should_return_expected_float_when_given_valid_http_version_string() {
+        let given_full_version = "HTTP/1.1";
+        let expected_version = 1.1;
+        let actual_version = get_http_version(given_full_version);
+        assert_eq!(actual_version.unwrap(), expected_version);
+    }
+
+    #[test]
+    #[should_panic]
+    fn should_have_an_error_result_when_version_is_not_valid() {
+        let given_bad_version = "HTTP/G";
+        get_http_version(given_bad_version).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn should_have_an_error_result_when_version_has_invalid_delimiter() {
+        let given_bad_version = "HTTP-1.1";
+        get_http_version(given_bad_version).unwrap();
     }
 }

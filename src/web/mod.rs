@@ -77,14 +77,36 @@ impl HttpRequest {
         let status_line = raw_request.split("\r\n").collect::<Vec<&str>>()[0];
         let status_line_split = status_line.split(" ").collect::<Vec<&str>>();
         let http_method = HttpMethod::from(status_line_split[0]).unwrap();
+        let uri = status_line_split[1];
+        let http_version = get_http_version(status_line_split[2]).unwrap();
         HttpRequest {
             http_method,
-            uri: String::from("/"),
-            http_version: 1.1,
+            uri: String::from(uri),
+            http_version,
             headers: None,
             body: None,
         }
     }
+}
+
+/// In martian http version is represented as a float; this is not true for a
+/// raw request. An Http Request will have the version on the end of the status
+/// line, and it will be prepended with *"HTTP/"*. This method will strip that
+/// unnecessary data off and return an _f32_ representing the version.
+///
+/// # Examples
+/// ```
+/// use martian::web::get_http_version;
+/// let given_full_version = "HTTP/1.1";
+/// let expected_version = 1.1;
+/// let actual_version = get_http_version(given_full_version).unwrap();
+/// assert_eq!(actual_version, expected_version);
+/// ```
+pub fn get_http_version(full_version_string: &str) -> Result<f32, &str> {
+    let version_split = full_version_string.split("/").collect::<Vec<&str>>();
+    Ok(version_split[1]
+        .parse::<f32>()
+        .expect("Could not get version float"))
 }
 
 mod tests;
