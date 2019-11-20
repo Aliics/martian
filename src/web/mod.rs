@@ -74,16 +74,18 @@ impl HttpRequest {
     /// assert_eq!(http_request, expected_http_request);
     /// ```
     pub fn from(raw_request: String) -> HttpRequest {
-        let status_line = raw_request.split("\r\n").collect::<Vec<&str>>()[0];
+        let lines = raw_request.split("\r\n").collect::<Vec<&str>>();
+        let status_line = lines[0];
         let status_line_split = status_line.split(" ").collect::<Vec<&str>>();
         let http_method = HttpMethod::from(status_line_split[0]).unwrap();
         let uri = status_line_split[1];
         let http_version = get_http_version(status_line_split[2]).unwrap();
+        let headers = get_headers_from_lines(&lines);
         HttpRequest {
             http_method,
             uri: String::from(uri),
             http_version,
-            headers: None,
+            headers,
             body: None,
         }
     }
@@ -91,13 +93,42 @@ impl HttpRequest {
 
 /// In martian http version is represented as a float; this is not true for a
 /// raw request. An Http Request will have the version on the end of the status
-/// line, and it will be prepended with *"HTTP/"*. This method will strip that
-/// unnecessary data off and return an _f32_ representing the version.
+/// line, and it will be prepended with *"HTTP/"*.
+///
+/// # Returns
+/// This method will strip that unnecessary data off and return an _f32_
+/// representing the version. In the case of not being able to parse the
+/// version, it will return an Error string.
 fn get_http_version(full_version_string: &str) -> Result<f32, &str> {
     let version_split = full_version_string.split("/").collect::<Vec<&str>>();
     Ok(version_split[1]
         .parse::<f32>()
         .expect("Could not get version float"))
+}
+
+/// Request headers are separated by new lines after the first new line
+/// appending the status line. The end of the headers is indicated by two
+/// sequential new lines with no content between them.
+///
+/// # Returns
+/// A _HashMap_ representation of the headers wrapped as an Option. This will
+/// return _None_ when no headers are present on the request.
+fn get_headers_from_lines(lines: &[&str]) -> Option<HashMap<String, String>> {
+    let mut headers = HashMap::new();
+    for line in &lines[1..] {
+        if line.is_empty() {
+            break;
+        }
+        let line_split = line.split(": ").collect::<Vec<&str>>();
+        let key = String::from(line_split[0]);
+        let value = String::from(line_split[1]);
+        headers.insert(key, value);
+    }
+    if !headers.is_empty() {
+        Some(headers)
+    } else {
+        None
+    }
 }
 
 mod tests;
