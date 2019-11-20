@@ -1,12 +1,14 @@
 #[cfg(test)]
 mod tests {
-    use crate::web::{get_headers_from_lines, get_http_version, HttpMethod, HttpRequest};
+    use crate::web::{
+        get_body_begin_index, get_headers_from_lines, get_http_version, HttpMethod, HttpRequest,
+    };
     use std::collections::HashMap;
 
     #[test]
     fn should_serialize_simple_http_request_with_all_fields() {
         let given_raw_request_string =
-            String::from("GET / HTTP/1.1\r\nContent-Type: plain/text\r\n\r\n");
+            String::from("GET / HTTP/1.1\r\nContent-Type: plain/text\r\n\r\nbody");
         let mut expected_http_headers = HashMap::new();
         expected_http_headers.insert(String::from("Content-Type"), String::from("plain/text"));
         let expected_http_request = HttpRequest {
@@ -14,7 +16,7 @@ mod tests {
             uri: String::from("/"),
             http_version: 1.1,
             headers: Some(expected_http_headers),
-            body: None,
+            body: Some(String::from("body")),
         };
         let actual_serialized_http_request = HttpRequest::from(given_raw_request_string);
         assert_eq!(expected_http_request, actual_serialized_http_request);
@@ -82,5 +84,14 @@ mod tests {
         let given_request_lines = given_request.split("\r\n").collect::<Vec<&str>>();
         let actual_headers = get_headers_from_lines(&given_request_lines);
         assert!(actual_headers.is_none());
+    }
+
+    #[test]
+    fn should_return_expected_line_when_getting_body_begin_of_full_request() {
+        let given_request = "GET / HTTP/1.1\r\nContent-Type: plain-text\r\n\r\nbody";
+        let given_request_lines = given_request.split("\r\n").collect::<Vec<&str>>();
+        let expected_index = 3;
+        let actual_index = get_body_begin_index(&given_request_lines).unwrap();
+        assert_eq!(actual_index, expected_index);
     }
 }

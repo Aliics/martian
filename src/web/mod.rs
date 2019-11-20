@@ -62,7 +62,7 @@ impl HttpRequest {
     /// # Examples:
     /// ```
     /// use martian::web::{HttpMethod, HttpRequest};
-    /// let raw_request = String::from("GET / HTTP/1.1\r\n\r\n\r\n");
+    /// let raw_request = String::from("GET / HTTP/1.1\r\n\r\n");
     /// let expected_http_request = HttpRequest {
     ///    http_method: HttpMethod::Get,
     ///    uri: String::from("/"),
@@ -77,16 +77,15 @@ impl HttpRequest {
         let lines = raw_request.split("\r\n").collect::<Vec<&str>>();
         let status_line = lines[0];
         let status_line_split = status_line.split(" ").collect::<Vec<&str>>();
-        let http_method = HttpMethod::from(status_line_split[0]).unwrap();
-        let uri = status_line_split[1];
-        let http_version = get_http_version(status_line_split[2]).unwrap();
-        let headers = get_headers_from_lines(&lines);
         HttpRequest {
-            http_method,
-            uri: String::from(uri),
-            http_version,
-            headers,
-            body: None,
+            http_method: HttpMethod::from(status_line_split[0]).unwrap(),
+            uri: String::from(status_line_split[1]),
+            http_version: get_http_version(status_line_split[2]).unwrap(),
+            headers: get_headers_from_lines(&lines),
+            body: match get_body_begin_index(&lines) {
+                Some(i) => Some(lines[i..].join("\r\n")),
+                None => None,
+            },
         }
     }
 }
@@ -128,6 +127,25 @@ fn get_headers_from_lines(lines: &[&str]) -> Option<HashMap<String, String>> {
         Some(headers)
     } else {
         None
+    }
+}
+
+/// The body begin index should be at the two new line escapes after the
+/// header block.
+///
+/// # Returns
+/// The index of the line after the header block wrapped in an _Option_. Will
+/// return with None if no body is present.
+fn get_body_begin_index(lines: &[&str]) -> Option<usize> {
+    let mut i = 0;
+    loop {
+        let line = lines[i];
+        if i + 1 >= lines.len() {
+            break None;
+        } else if line.is_empty() && !lines[i + 1].is_empty() {
+            break Some(i + 1);
+        }
+        i += 1;
     }
 }
 
