@@ -18,14 +18,14 @@ impl HttpMethod {
     /// [`HttpMethod`] associated with the request. This method takes a single
     /// word string and attempts to find the corresponding enum, in any case.
     ///
-    /// # Returns
+    /// # Returns:
     /// If the string matches an HttpMethod enum then that enum is returned in
     /// a `Result`. However, if that is non-existent then it returns an `Err`.
     ///
     /// # Examples:
     /// ```
     /// use martian::web::HttpMethod;
-    /// let get_method = "GET"; // can be any case
+    /// let get_method = "GET";
     /// let http_method = HttpMethod::from(get_method).unwrap();
     /// assert_eq!(http_method, HttpMethod::Get);
     /// ```
@@ -62,10 +62,10 @@ impl HttpRequest {
     /// # Examples:
     /// ```
     /// use martian::web::{HttpMethod, HttpRequest};
-    /// let raw_request = String::from("GET / HTTP/1.1\r\n\r\n");
+    /// let raw_request = "GET / HTTP/1.1\r\n\r\n".into();
     /// let expected_http_request = HttpRequest {
     ///    http_method: HttpMethod::Get,
-    ///    uri: String::from("/"),
+    ///    uri: "/".into(),
     ///    http_version: 1.1,
     ///    headers: None,
     ///    body: None,
@@ -79,7 +79,7 @@ impl HttpRequest {
         let status_line_split = status_line.split(" ").collect::<Vec<&str>>();
         HttpRequest {
             http_method: HttpMethod::from(status_line_split[0]).unwrap(),
-            uri: String::from(status_line_split[1]),
+            uri: status_line_split[1].into(),
             http_version: get_http_version(status_line_split[2]).unwrap(),
             headers: get_headers_from_lines(&lines),
             body: match get_body_begin_index(&lines) {
@@ -102,10 +102,10 @@ impl HttpRequest {
     /// ```
     /// use martian::web::HttpRequest;
     /// use std::collections::HashMap;
-    /// let given_raw_request = String::from("GET /hello?greet=world HTTP/1.1\r\n\r\n");
+    /// let given_raw_request = "GET /hello?greet=world HTTP/1.1\r\n\r\n".into();
     /// let given_http_request = HttpRequest::from(given_raw_request);
     /// let mut expected_query_params = HashMap::new();
-    /// expected_query_params.insert(String::from("greet"), String::from("world"));
+    /// expected_query_params.insert("greet".into(), "world".into());
     /// let actual_query_params = given_http_request.params().unwrap();
     /// assert_eq!(actual_query_params, expected_query_params);
     /// ```
@@ -118,8 +118,8 @@ impl HttpRequest {
         let params = params_split[1].split("&").collect::<Vec<&str>>();
         for param in params {
             let param_split = param.split("=").collect::<Vec<&str>>();
-            let key = String::from(param_split[0]);
-            let value = String::from(param_split[1]);
+            let key = param_split[0].into();
+            let value = param_split[1].into();
             param_map.insert(key, value);
         }
         if !param_map.is_empty() {
@@ -134,7 +134,7 @@ impl HttpRequest {
 /// raw request. An Http Request will have the version on the end of the status
 /// line, and it will be prepended with *"HTTP/"*.
 ///
-/// # Returns
+/// # Returns:
 /// This method will strip that unnecessary data off and return an _f32_
 /// representing the version. In the case of not being able to parse the
 /// version, it will return an Error string.
@@ -159,8 +159,8 @@ fn get_headers_from_lines(lines: &[&str]) -> Option<HashMap<String, String>> {
             break;
         }
         let line_split = line.split(": ").collect::<Vec<&str>>();
-        let key = String::from(line_split[0]);
-        let value = String::from(line_split[1]);
+        let key = line_split[0].into();
+        let value = line_split[1].into();
         headers.insert(key, value);
     }
     if !headers.is_empty() {
@@ -189,4 +189,5 @@ fn get_body_begin_index(lines: &[&str]) -> Option<usize> {
     }
 }
 
+#[cfg(test)]
 mod tests;
