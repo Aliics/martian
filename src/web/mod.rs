@@ -93,12 +93,12 @@ impl HttpRequest {
     /// of HttpRequest. The start of the query params is always denoted by a
     /// `?` and multiple query params are separated by `&`.
     ///
-    /// Returns:
+    /// # Returns:
     /// An `Option` of a `HashMap` which contains a representation of the
     /// params passed to the request via the uri. Will return `None` if no
     /// params are present.
     ///
-    /// Example:
+    /// # Example:
     /// ```
     /// use martian::web::HttpRequest;
     /// use std::collections::HashMap;
