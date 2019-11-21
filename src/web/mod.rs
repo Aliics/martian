@@ -20,7 +20,7 @@ impl HttpMethod {
     ///
     /// # Returns
     /// If the string matches an HttpMethod enum then that enum is returned in
-    /// a _Result_. However, if that is non-existent then it returns an _Err_.
+    /// a `Result`. However, if that is non-existent then it returns an `Err`.
     ///
     /// # Examples:
     /// ```
@@ -88,6 +88,46 @@ impl HttpRequest {
             },
         }
     }
+
+    /// Query params arrive on the uri of the request and can be on any type
+    /// of HttpRequest. The start of the query params is always denoted by a
+    /// `?` and multiple query params are separated by `&`.
+    ///
+    /// Returns:
+    /// An `Option` of a `HashMap` which contains a representation of the
+    /// params passed to the request via the uri. Will return `None` if no
+    /// params are present.
+    ///
+    /// Example:
+    /// ```
+    /// use martian::web::HttpRequest;
+    /// use std::collections::HashMap;
+    /// let given_raw_request = String::from("GET /hello?greet=world HTTP/1.1\r\n\r\n");
+    /// let given_http_request = HttpRequest::from(given_raw_request);
+    /// let mut expected_query_params = HashMap::new();
+    /// expected_query_params.insert(String::from("greet"), String::from("world"));
+    /// let actual_query_params = given_http_request.params().unwrap();
+    /// assert_eq!(actual_query_params, expected_query_params);
+    /// ```
+    pub fn params(&self) -> Option<HashMap<String, String>> {
+        let mut param_map = HashMap::new();
+        let params_split = self.uri.split("?").collect::<Vec<&str>>();
+        if params_split.len() < 2 {
+            return None;
+        }
+        let params = params_split[1].split("&").collect::<Vec<&str>>();
+        for param in params {
+            let param_split = param.split("=").collect::<Vec<&str>>();
+            let key = String::from(param_split[0]);
+            let value = String::from(param_split[1]);
+            param_map.insert(key, value);
+        }
+        if !param_map.is_empty() {
+            Some(param_map)
+        } else {
+            None
+        }
+    }
 }
 
 /// In martian http version is represented as a float; this is not true for a
@@ -109,9 +149,9 @@ fn get_http_version(full_version_string: &str) -> Result<f32, &str> {
 /// appending the status line. The end of the headers is indicated by two
 /// sequential new lines with no content between them.
 ///
-/// # Returns
-/// A _HashMap_ representation of the headers wrapped as an Option. This will
-/// return _None_ when no headers are present on the request.
+/// # Returns:
+/// A `HashMap` representation of the headers wrapped as an `Option`. This will
+/// return `None` when no headers are present on the request.
 fn get_headers_from_lines(lines: &[&str]) -> Option<HashMap<String, String>> {
     let mut headers = HashMap::new();
     for line in &lines[1..] {
@@ -133,9 +173,9 @@ fn get_headers_from_lines(lines: &[&str]) -> Option<HashMap<String, String>> {
 /// The body begin index should be at the two new line escapes after the
 /// header block.
 ///
-/// # Returns
-/// The index of the line after the header block wrapped in an _Option_. Will
-/// return with None if no body is present.
+/// # Returns:
+/// The index of the line after the header block wrapped in an `Option`. Will
+/// return with `None` if no body is present.
 fn get_body_begin_index(lines: &[&str]) -> Option<usize> {
     let mut i = 0;
     loop {

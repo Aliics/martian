@@ -94,4 +94,32 @@ mod tests {
         let actual_index = get_body_begin_index(&given_request_lines).unwrap();
         assert_eq!(actual_index, expected_index);
     }
+
+    #[test]
+    fn should_pull_single_query_param_off_request_when_param_is_on_request() {
+        let given_request = HttpRequest {
+            http_method: HttpMethod::Get,
+            uri: String::from("/hello?greet=world"),
+            http_version: 1.1,
+            headers: None,
+            body: None,
+        };
+        let mut expected_query_params = HashMap::new();
+        expected_query_params.insert(String::from("greet"), String::from("world"));
+        let actual_query_params = given_request.params().unwrap();
+        assert_eq!(actual_query_params, expected_query_params);
+    }
+
+    #[test]
+    fn should_return_none_when_no_params_are_given_on_request() {
+        let given_request = HttpRequest {
+            http_method: HttpMethod::Get,
+            uri: String::from("/hello"),
+            http_version: 1.1,
+            headers: None,
+            body: None,
+        };
+        let actual_query_params = given_request.params();
+        assert!(actual_query_params.is_none());
+    }
 }
