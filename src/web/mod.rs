@@ -62,7 +62,7 @@ impl HttpRequest {
     /// # Examples:
     /// ```
     /// use martian::web::{HttpMethod, HttpRequest};
-    /// let raw_request = "GET / HTTP/1.1\r\n\r\n".into();
+    /// let raw_request = "GET / HTTP/1.1\r\n\r\n";
     /// let expected_http_request = HttpRequest {
     ///    http_method: HttpMethod::Get,
     ///    uri: "/".into(),
@@ -70,10 +70,10 @@ impl HttpRequest {
     ///    headers: None,
     ///    body: None,
     /// };
-    /// let http_request = HttpRequest::from(raw_request);
-    /// assert_eq!(http_request, expected_http_request);
+    /// let actual_http_request = HttpRequest::from(raw_request);
+    /// assert_eq!(actual_http_request, expected_http_request);
     /// ```
-    pub fn from(raw_request: String) -> HttpRequest {
+    pub fn from(raw_request: &str) -> HttpRequest {
         let lines = raw_request.split("\r\n").collect::<Vec<&str>>();
         let status_line = lines[0];
         let status_line_split = status_line.split(" ").collect::<Vec<&str>>();
@@ -102,11 +102,11 @@ impl HttpRequest {
     /// ```
     /// use martian::web::HttpRequest;
     /// use std::collections::HashMap;
-    /// let given_raw_request = "GET /hello?greet=world HTTP/1.1\r\n\r\n".into();
-    /// let given_http_request = HttpRequest::from(given_raw_request);
+    /// let raw_request = "GET /hello?greet=world HTTP/1.1\r\n\r\n";
+    /// let http_request = HttpRequest::from(raw_request);
     /// let mut expected_query_params = HashMap::new();
     /// expected_query_params.insert("greet".into(), "world".into());
-    /// let actual_query_params = given_http_request.params().unwrap();
+    /// let actual_query_params = http_request.params().unwrap();
     /// assert_eq!(actual_query_params, expected_query_params);
     /// ```
     pub fn params(&self) -> Option<HashMap<String, String>> {
