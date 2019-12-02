@@ -5,7 +5,7 @@ use std::collections::HashMap;
 /// Standard across the web, http methods dictate how requests are handled and
 /// what data can be given to the server. More documentation about individual
 /// use [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods).
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum HttpMethod {
     Get,
     Post,
