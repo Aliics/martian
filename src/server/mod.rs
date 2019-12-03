@@ -3,8 +3,9 @@
 //! service. Built to hopefully be easy to use, but configurable if you are
 //! into pumping out the most performance you possibly can out of a thread.
 
-use crate::web::{HttpMethod, HttpRequest, HttpResponse};
 use std::clone::Clone;
+
+use crate::web::{HttpMethod, HttpRequest, HttpResponse};
 
 type Callback = fn(HttpRequest) -> HttpResponse;
 
@@ -20,12 +21,36 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn start(&self) {
-        unimplemented!();
+    /// Setups up a [`Route`] based off a function or closure passed in. The
+    /// [`Route`] bound will be the return of the closure.
+    ///
+    /// # Examples:
+    /// ```
+    /// use martian::server::{Server, Route};
+    /// use martian::web::HttpMethod;
+    /// let mut server = Server::default();
+    /// server.route(|| Route::bind(HttpMethod::Get, "/").to(test_get_root));
+    /// ```
+    ///
+    /// [`Route`]: ./struct.Route.html
+    pub fn route(&mut self, route_fn: fn() -> Route) {
+        let route = route_fn();
+        let find_binding = |r: &&Route| r.binding == route.binding;
+        if self.routes.iter().find(find_binding).is_some() {
+            panic!("Callback already bound with: {:?}", route.binding);
+        }
+        self.routes.push(route);
     }
 
-    pub fn route(&mut self, route_fn: fn() -> Route) {
-        self.routes.push(route_fn());
+    pub(in crate::server) fn delegate(&self, request: HttpRequest) -> Option<HttpResponse> {
+        let request_binding = Binding {
+            http_method: request.http_method.clone(),
+            uri: request.uri.clone(),
+        };
+        let route = self.routes.iter().find(
+            |r| r.binding == request_binding
+        );
+        Some((route?.callback)(request))
     }
 }
 
@@ -69,6 +94,7 @@ impl Route {
 ///
 /// [`Route`]: ./struct.Route.html
 /// [`HttpMethod`]: ../web/enum.HttpMethod.html
+#[derive(PartialEq, Debug)]
 pub struct Binding {
     http_method: HttpMethod,
     uri: String,

@@ -18,6 +18,7 @@ pub enum HttpMethod {
 /// with a few exceptions will mean the same thing across the world. More
 /// documentation about individual use
 /// [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status).
+#[derive(PartialEq, Debug)]
 pub enum StatusCode {
     Ok = 200,
 }
@@ -142,6 +143,7 @@ impl HttpRequest {
 /// When a request is done being handled an `HttpResponse` is to be used as the
 /// response. This is standard across the web and there is some information
 /// [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages).
+#[derive(PartialEq, Debug)]
 pub struct HttpResponse {
     pub http_version: f32,
     pub status_code: StatusCode,
