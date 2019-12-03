@@ -21,6 +21,7 @@ pub enum HttpMethod {
 #[derive(PartialEq, Debug)]
 pub enum StatusCode {
     Ok = 200,
+    InternalServerError = 500,
 }
 
 impl HttpMethod {

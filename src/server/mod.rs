@@ -27,29 +27,31 @@ impl Server {
     /// # Examples:
     /// ```
     /// use martian::server::{Server, Route};
-    /// use martian::web::HttpMethod;
+    /// use martian::web::{HttpMethod, HttpResponse, StatusCode};
     /// let mut server = Server::default();
-    /// server.route(|| Route::bind(HttpMethod::Get, "/").to(test_get_root));
+    /// server.route(|| Route::bind(HttpMethod::Get).to("/", |_|
+    ///     HttpResponse {
+    ///         http_version: 1.1,
+    ///         status_code: StatusCode::Ok,
+    ///     }
+    /// ));
     /// ```
     ///
     /// [`Route`]: ./struct.Route.html
-    pub fn route(&mut self, route_fn: fn() -> Route) {
-        let route = route_fn();
-        let find_binding = |r: &&Route| r.binding == route.binding;
-        if self.routes.iter().find(find_binding).is_some() {
-            panic!("Callback already bound with: {:?}", route.binding);
-        }
-        self.routes.push(route);
+    pub fn route(&mut self, binding_fn: fn() -> Binding) {
+        binding_fn().routes.iter().for_each(|route| {
+            if self.routes.iter().find(|r| *r == route).is_some() {
+                panic!("Callback already bound with: {:?}", route);
+            }
+            self.routes.push(route.clone());
+        });
     }
 
     pub(in crate::server) fn delegate(&self, request: HttpRequest) -> Option<HttpResponse> {
-        let request_binding = Binding {
-            http_method: request.http_method.clone(),
-            uri: request.uri.clone(),
-        };
-        let route = self.routes.iter().find(
-            |r| r.binding == request_binding
-        );
+        let route = self
+            .routes
+            .iter()
+            .find(|route| route.http_method == request.http_method && route.uri == request.uri);
         Some((route?.callback)(request))
     }
 }
@@ -59,34 +61,35 @@ impl Server {
 ///
 /// [`Server`]: ./struct.Server.html
 /// [`HttpRequest`]: ../web/struct.HttpRequest.html
+#[derive(PartialEq, Debug, Clone)]
 pub struct Route {
-    binding: Binding,
+    http_method: HttpMethod,
+    uri: String,
     callback: Callback,
 }
 
 impl Route {
-    /// Binding of an [`HttpMethod`] and `Uri` for declaring a [`Route`], see
-    /// [`Binding`] for an example.
+    /// Binding of an [`HttpMethod`] for declaring a [`Route`], see [`Binding`]
+    /// for an example.
     ///
     /// [`HttpMethod`]: ../web/enum.HttpMethod.html
     /// [`Route`]: ./struct.Route.html
     /// [`Binding`]: ./struct.Binding.html
-    pub fn bind(http_method: HttpMethod, uri: &str) -> Binding {
+    pub fn bind(http_method: HttpMethod) -> Binding {
         Binding {
             http_method,
-            uri: uri.into(),
+            routes: Vec::new(),
         }
     }
 }
 
-#[derive(Clone)]
-/// Simple abstraction for binding a [`Route`] to an [`HttpMethod`] and `Uri`.
+/// Simple abstraction for binding a [`Route`] to an [`HttpMethod`].
 ///
 /// # Examples:
 /// ```
 /// use martian::server::Route;
 /// use martian::web::{HttpMethod, HttpRequest, HttpResponse, StatusCode};
-/// Route::bind(HttpMethod::Get, "/").to(|_| HttpResponse {
+/// Route::bind(HttpMethod::Get).to("/", |_| HttpResponse {
 ///     http_version: 1.1,
 ///     status_code: StatusCode::Ok
 /// });
@@ -94,10 +97,10 @@ impl Route {
 ///
 /// [`Route`]: ./struct.Route.html
 /// [`HttpMethod`]: ../web/enum.HttpMethod.html
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Binding {
     http_method: HttpMethod,
-    uri: String,
+    routes: Vec<Route>,
 }
 
 impl Binding {
@@ -106,11 +109,14 @@ impl Binding {
     ///
     /// [`Server`]: ./struct.Server.html
     /// [`HttpMethod`]: ../web/enum.HttpMethod.html
-    pub fn to(&self, callback: Callback) -> Route {
-        Route {
-            binding: self.clone(),
+    pub fn to(mut self, uri: &str, callback: Callback) -> Binding {
+        let binding = self.clone();
+        self.routes.push(Route {
+            http_method: binding.http_method,
+            uri: uri.into(),
             callback,
-        }
+        });
+        self
     }
 }
 
